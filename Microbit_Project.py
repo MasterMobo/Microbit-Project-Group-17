@@ -97,7 +97,8 @@ def on_forever():
             openValve(i)
         else:
             closeValve(i)
-
+    
+    #LCD Control
     if currentShow == 1:
         s1_percent = Math.ceil(Math.map(sensorVal[0], 800, 300, 0, 100))
         makerbit.show_string_on_lcd1602("" + str(sensorVal[0]),
