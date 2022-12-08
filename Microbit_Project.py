@@ -5,6 +5,10 @@ sensorVal = [0, 0, 0]     # List of sensor values
 currentShow = 1     # The pot currently being displayed on LCD
 THRESHOLD = 500     # The value after which the valve will open
 
+# Initialize I2C adress of LCD
+makerbit.connect_lcd(39)
+makerbit.clear_lcd1602()
+
 # Custom characters for LCD display
 makerbit.lcd_make_character(LcdChar.C1,
     makerbit.lcd_character_pixels("""
@@ -80,9 +84,6 @@ lcdPos = [LcdPosition1602.POS17,
     LcdPosition1602.POS31,
     LcdPosition1602.POS32]
 
-# Initialize I2C adress of LCD
-makerbit.connect_lcd(39)
-
 #-------------------------------------------------------------------------------------------
 
 #--MAIN-LOOP--------------------------------------------------------------------------------
@@ -97,10 +98,11 @@ def on_forever():
             openValve(i)
         else:
             closeValve(i)
-    
+
     #LCD Control
     if currentShow == 1:
         s1_percent = Math.ceil(Math.map(sensorVal[0], 800, 300, 0, 100))
+        makerbit.show_string_on_lcd1602("Pot 1:", makerbit.position1602(LcdPosition1602.POS1), 6)
         makerbit.show_string_on_lcd1602("" + str(sensorVal[0]),
             makerbit.position1602(LcdPosition1602.POS8),
             3)
@@ -137,7 +139,7 @@ def updatePins():
     while i <= len(sensors) - 1:
         sensorVal[i] = pins.analog_read_pin(sensors[i])
         i += 1
-
+        
 
 def progressBar(val: number):
     # First bit of bar
@@ -152,9 +154,9 @@ def progressBar(val: number):
     
     # Last bit of bar
     if val >= 100:
-        makerbit.lcd_show_character1602(LcdChar.C4, makerbit.position1602(LcdPosition1602.POS32))
-    else:
         makerbit.lcd_show_character1602(LcdChar.C5, makerbit.position1602(LcdPosition1602.POS32))
+    else:
+        makerbit.lcd_show_character1602(LcdChar.C4, makerbit.position1602(LcdPosition1602.POS32))
 
 
 def closeValve(ind: number):
@@ -170,6 +172,6 @@ def on_every_interval():
     currentShow += 1
     if currentShow > 3:
         currentShow = 1
-loops.every_interval(2000, on_every_interval)
+loops.every_interval(5000, on_every_interval)
 
 #---------------------------------------------------------------------------------------------------------
