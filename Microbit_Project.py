@@ -134,12 +134,9 @@ basic.forever(on_forever)
 #---------------------------------------------------------------------------------------------------------
 
 #-OTHER-FUNCIONS------------------------------------------------------------------------------------------
-def updatePins():
-    i = 0
-    while i <= len(sensors) - 1:
+def updatePins():   
+    for i in range(len(sensors)):
         sensorVal[i] = pins.analog_read_pin(sensors[i])
-        i += 1
-        
 
 def progressBar(val: number):
     # First bit of bar
