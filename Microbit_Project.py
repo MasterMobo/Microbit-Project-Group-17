@@ -1,12 +1,12 @@
 #--SETUP--------------------------------------------------------------------------
 valves = [DigitalPin.P8, DigitalPin.P12, DigitalPin.P16]    # List of valve pin objects
-sensors = [AnalogPin.P0, AnalogPin.P1, AnalogPin.P2]    # List of sensor pin objects
-sensorVal = [0, 0, 0]     # List of sensor values
-currentShow = 1     # The pot currently being displayed on LCD
-manualMode = False  # Whether the system is in manual mode or not
-manualModeTimeElapsed = 0   # How many seconds the system has been in manual mode (refreshes after any user input)
-manualModeTimeWindow = 10   # How many seconds the system can be in manual mode
-THRESHOLD = 430     # The value after which the valve will open
+sensors = [AnalogPin.P0, AnalogPin.P1, AnalogPin.P2]        # List of sensor pin objects
+sensorVal = [0, 0, 0]                                       # List of sensor values
+currentShow = 1                                             # The pot currently being displayed on LCD
+manualMode = False                                          # Whether the system is in manual mode or not
+manualModeTimeElapsed = 0                                   # How many seconds the system has been in manual mode (refreshes after any user input)
+manualModeTimeWindow = 10                                   # How many seconds the system can be in manual mode
+THRESHOLD = 430                                             # The value after which the valve will open
 
 # Initialize I2C adress of LCD
 makerbit.connect_lcd(39)
@@ -90,12 +90,11 @@ lcdPos = [LcdPosition1602.POS17,
 #-------------------------------------------------------------------------------------------
 
 #--MAIN-LOOP--------------------------------------------------------------------------------
-def on_forever():
 
+def on_forever():
     # Update values of sensors
     updatePins()
 
-    
     if manualMode == False:
         for i in range(len(sensors)):
             # Check moisture, if too low then open valve
@@ -108,14 +107,17 @@ def on_forever():
     showStatsDebug(currentShow)
 
 basic.forever(on_forever)
+
 #---------------------------------------------------------------------------------------------------------
 
 #-OTHER-FUNCIONS------------------------------------------------------------------------------------------
+
 def updatePins():
     """Update values of sensors"""
     for i in range(len(sensors)):
         sensorVal[i] = pins.analog_read_pin(sensors[i])
 
+        
 def showStatsDebug(showNum):
     global manualMode
     percent_val = Math.ceil(Math.map(sensorVal[showNum-1], 800, 300, 0, 100))
@@ -147,6 +149,7 @@ def showStats(showNum):
     else:
         makerbit.show_string_on_lcd1602("Auto", makerbit.position1602(LcdPosition1602.POS10), 4)
 
+        
 def progressBar(val: number):
     """Display progress bar based on input value (in percentage)"""
     # First bit of bar
@@ -201,6 +204,7 @@ def on_button_pressed_a():
         manualMode = True
 input.on_button_pressed(Button.A, on_button_pressed_a)
 
+
 def on_button_pressed_b():
      """Change to next valve if in manual mode, activate manual mode if not"""
     global currentShow
@@ -215,6 +219,7 @@ def on_button_pressed_b():
         manualMode = True
 input.on_button_pressed(Button.B, on_button_pressed_b)
 
+
 def on_button_pressed_ab():
     """Open current valve if in manual mode"""
     global currentShow
@@ -226,6 +231,7 @@ def on_button_pressed_ab():
         closeValve(currentShow - 1)
         manualModeTimeElapsed = 0
 input.on_button_pressed(Button.AB, on_button_pressed_ab)
+
 
 def manualModeTimer():
     """Timer function for reseting manual mode"""
