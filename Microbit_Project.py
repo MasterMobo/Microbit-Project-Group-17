@@ -3,9 +3,9 @@ valves = [DigitalPin.P8, DigitalPin.P12, DigitalPin.P16]    # List of valve pin 
 sensors = [AnalogPin.P0, AnalogPin.P1, AnalogPin.P2]    # List of sensor pin objects
 sensorVal = [0, 0, 0]     # List of sensor values
 currentShow = 1     # The pot currently being displayed on LCD
-manualMode = False
-manualModeTimeElapsed = 0
-manualModeTimeWindow = 10
+manualMode = False  # Whether the system is in manual mode or not
+manualModeTimeElapsed = 0   # How many seconds the system has been in manual mode (refreshes after any user input)
+manualModeTimeWindow = 10   # How many seconds the system can be in manual mode
 THRESHOLD = 430     # The value after which the valve will open
 
 # Initialize I2C adress of LCD
@@ -87,9 +87,6 @@ lcdPos = [LcdPosition1602.POS17,
     LcdPosition1602.POS31,
     LcdPosition1602.POS32]
 
-
-
-
 #-------------------------------------------------------------------------------------------
 
 #--MAIN-LOOP--------------------------------------------------------------------------------
@@ -98,9 +95,10 @@ def on_forever():
     # Update values of sensors
     updatePins()
 
-    # Check moisture, if too low then open valve
+    
     if manualMode == False:
         for i in range(len(sensors)):
+            # Check moisture, if too low then open valve
             if sensorVal[i] >= THRESHOLD:
                 openValve(i)
             else:
@@ -114,6 +112,7 @@ basic.forever(on_forever)
 
 #-OTHER-FUNCIONS------------------------------------------------------------------------------------------
 def updatePins():
+    """Update values of sensors"""
     for i in range(len(sensors)):
         sensorVal[i] = pins.analog_read_pin(sensors[i])
 
@@ -127,27 +126,29 @@ def showStatsDebug(showNum):
     makerbit.show_string_on_lcd1602("" + str(percent_val) + "%",
         makerbit.position1602(LcdPosition1602.POS8),
         3)
-    if manualMode == False:
-        makerbit.show_string_on_lcd1602("AUTO", makerbit.position1602(LcdPosition1602.POS12), 4)
-    else:
+    if manualMode == True:    
         makerbit.show_string_on_lcd1602("MANUAL", makerbit.position1602(LcdPosition1602.POS12), 6)
     progressBar(percent_val)
+    else:
+        makerbit.show_string_on_lcd1602("AUTO", makerbit.position1602(LcdPosition1602.POS12), 4)
+        
 
 def showStats(showNum):
+    """Display statistics of input valve"""
     percent_val = Math.ceil(Math.map(sensorVal[showNum-1], 800, 300, 0, 100))
     makerbit.show_string_on_lcd1602("Pot " + str(showNum) + ":", makerbit.position1602(LcdPosition1602.POS1), 6)
-    makerbit.show_string_on_lcd1602("" + str(sensorVal[showNum-1]),
-        makerbit.position1602(LcdPosition1602.POS8),
-        3)
-    makerbit.show_string_on_lcd1602(str(manualMode),
-            makerbit.position1602(LcdPosition1602.POS8),
-            5)
     makerbit.show_string_on_lcd1602("" + str(percent_val) + "%",
         makerbit.position1602(LcdPosition1602.POS13),
         6)
     progressBar(percent_val)
+    if manualMode == True:    
+        makerbit.show_string_on_lcd1602("Manual", makerbit.position1602(LcdPosition1602.POS10), 6)
+    progressBar(percent_val)
+    else:
+        makerbit.show_string_on_lcd1602("Auto", makerbit.position1602(LcdPosition1602.POS10), 4)
 
 def progressBar(val: number):
+    """Display progress bar based on input value (in percentage)"""
     # First bit of bar
     makerbit.lcd_show_character1602(LcdChar.C3, makerbit.position1602(LcdPosition1602.POS17))
     
@@ -166,22 +167,28 @@ def progressBar(val: number):
 
 
 def closeValve(ind: number):
+    """Close valve at index i (starting from 0)"""
     pins.digital_write_pin(valves[ind], 0)
 
 
-def openValve(ind2: number):
-    pins.digital_write_pin(valves[ind2], 1)
+def openValve(ind: number):
+    """Open valve at index i (starting from 0)"""
+    pins.digital_write_pin(valves[ind], 1)
 
 
-def on_every_interval():
+def changeCurrentShow():
+    """Change current valve to next valve in automatic mode"""
     if manualMode == False:
         global currentShow
         currentShow += 1
         if currentShow > 3:
             currentShow = 1
-loops.every_interval(5000, on_every_interval)
+loops.every_interval(5000, changeCurrentShow)
+
+#--Manual-mode-control------------------------------------------------------------
 
 def on_button_pressed_a():
+    """Change to previous valve if in manual mode, activate manual mode if not"""
     global currentShow
     global manualMode
     global manualModeTimeElapsed
@@ -195,6 +202,7 @@ def on_button_pressed_a():
 input.on_button_pressed(Button.A, on_button_pressed_a)
 
 def on_button_pressed_b():
+     """Change to next valve if in manual mode, activate manual mode if not"""
     global currentShow
     global manualMode
     global manualModeTimeElapsed
@@ -208,6 +216,7 @@ def on_button_pressed_b():
 input.on_button_pressed(Button.B, on_button_pressed_b)
 
 def on_button_pressed_ab():
+    """Open current valve if in manual mode"""
     global currentShow
     global manualMode
     global manualModeTimeElapsed
@@ -217,7 +226,9 @@ def on_button_pressed_ab():
         closeValve(currentShow - 1)
         manualModeTimeElapsed = 0
 input.on_button_pressed(Button.AB, on_button_pressed_ab)
-def manualModeCountdown():
+
+def manualModeTimer():
+    """Timer function for reseting manual mode"""
     global manualMode
     global manualModeTimeWindow
     global manualModeTimeElapsed
@@ -228,5 +239,6 @@ def manualModeCountdown():
         manualMode = False
         manualModeTimeElapsed = 0
     
-loops.every_interval(1000, manualModeCountdown)
+loops.every_interval(1000, manualModeTimer)
+
 #---------------------------------------------------------------------------------------------------------
