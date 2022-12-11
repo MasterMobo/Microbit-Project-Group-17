@@ -6,9 +6,9 @@ currentShow = 1                                             # The pot currently 
 manualMode = False                                          # Whether the system is in manual mode or not
 manualModeTimeElapsed = 0                                   # How many seconds the system has been in manual mode (refreshes after any user input)
 manualModeTimeWindow = 10                                   # How many seconds the system can be in manual mode
-settingThreshold = False
-MAX_VAL = 800
-MIN_VAL = 300
+settingThreshold = False                                    # Whether the user is setting the threshold
+MAX_VAL = 800                                               # Maximum value read from moisture sensor
+MIN_VAL = 300                                               # Minimum value read from moisture sensor
 THRESHOLD = 430                                             # The value after which the valve will open
 
 # Initialize I2C adress of LCD
@@ -72,7 +72,7 @@ makerbit.lcd_make_character(LcdChar.C5,
             # # # . .
     """))
 
-# List of LCD position (for progress bar display)
+# List of LCD positions (for progress bar display)
 lcdPos = [LcdPosition1602.POS17,
     LcdPosition1602.POS18,
     LcdPosition1602.POS19,
@@ -119,13 +119,19 @@ basic.forever(on_forever)
 #-OTHER-FUNCIONS------------------------------------------------------------------------------------------
 
 def updatePins():
+    """Update the values of sensors"""
     for i in range(len(sensors)):
         sensorVal[i] = pins.analog_read_pin(sensors[i])
 
 def calculatePercent(val):
+    """Calculate the percentage value of given moisture reading"""
+    global MAX_VAL
+    global MIN_VAL
+
     return Math.ceil(Math.map(val, MAX_VAL, MIN_VAL, 0, 100))
 
 def setThresholdWindow():
+    """Shows the window for setting threshold"""
     makerbit.clear_lcd1602()
     makerbit.show_string_on_lcd1602("Set Threshold:", makerbit.position1602(LcdPosition1602.POS1), 16)
     makerbit.show_string_on_lcd1602(str(THRESHOLD) + " (" + str(calculatePercent(THRESHOLD)) + "%)", makerbit.position1602(LcdPosition1602.POS17), 16)
@@ -142,6 +148,7 @@ def showStatsDetailed(showNum):
         makerbit.position1602(LcdPosition1602.POS8),
         3)
     progressBar(percent_val)
+
     if manualMode == True:
         makerbit.show_string_on_lcd1602("MANUAL", makerbit.position1602(LcdPosition1602.POS12), 6)
         
@@ -150,6 +157,7 @@ def showStatsDetailed(showNum):
         
 
 def showStats(showNum):
+    """Display statistics of the given pot"""
     global manualMode
 
     percent_val = calculatePercent(sensorVal[showNum-1])
@@ -158,6 +166,7 @@ def showStats(showNum):
         makerbit.position1602(LcdPosition1602.POS7),
         4)
     progressBar(percent_val)
+
     if manualMode == True:
         makerbit.show_string_on_lcd1602("Manual", makerbit.position1602(LcdPosition1602.POS11), 6)
     else:
@@ -165,6 +174,7 @@ def showStats(showNum):
 
 
 def progressBar(val: number):
+    """Display progrerss bar based on moisture level"""
     # First bit of bar
     makerbit.lcd_show_character1602(LcdChar.C3, makerbit.position1602(LcdPosition1602.POS17))
     
@@ -183,14 +193,17 @@ def progressBar(val: number):
 
 
 def closeValve(ind: number):
+    """Closes given valve (indexed from 0)"""
     pins.digital_write_pin(valves[ind], 0)
 
 
 def openValve(ind: number):
+    """Opens given valve (indexed from 0)"""
     pins.digital_write_pin(valves[ind], 1)
 
 
 def showNext():
+    """Changes the currently displayed valve to the next one"""
     if manualMode == False:
         global currentShow
         currentShow += 1
@@ -199,70 +212,84 @@ def showNext():
 loops.every_interval(5000, showNext)
 
 def startManualMode():
+    """Initializes the manual mode"""
     global manualMode
+
+    # Close all valves before going into manual mode
     for i in range(len(sensors)):
         closeValve(i)
+
     manualMode = True
 
 #--Button-control------------------------------------------------------------
 
 def on_button_pressed_a():
+    """Called when button A is pressed"""
     global currentShow
     global manualMode
     global manualModeTimeElapsed
     global THRESHOLD
     global MIN_VAL
 
+    # Decrease threshold if user is setting threshold
     if settingThreshold:
         THRESHOLD = THRESHOLD - 5
-        if THRESHOLD < MIN_VAL:
-            THRESHOLD = MIN_VAL
+        if THRESHOLD < MIN_VAL:     # Clamp THRESHOLD above MIN_VAL
+            THRESHOLD = MIN_VAL     
         return
 
+    # Change to previous valve if in manual mode
     if manualMode == True:
         currentShow -= 1
-        if currentShow < 1:
-            currentShow = 3
-        manualModeTimeElapsed = 0
+        if currentShow < 1:       
+            currentShow = 3         
+        manualModeTimeElapsed = 0   # Refresh manual mode timer
     else:
         startManualMode()
 input.on_button_pressed(Button.A, on_button_pressed_a)
 
 
 def on_button_pressed_b():
+    """Called when button B is pressed"""
     global currentShow
     global manualMode
     global manualModeTimeElapsed
     global THRESHOLD
     global MAX_VAL
 
+    # Increase threshold if user is setting threshold
     if settingThreshold:
         THRESHOLD = THRESHOLD + 5
         if THRESHOLD > MAX_VAL:
-            THRESHOLD = MAX_VAL
+            THRESHOLD = MAX_VAL     # Clamp THRESHOLD bellow MAX_VAL
         return
 
+    # Change to next valve if in manual mode
     if manualMode == True:
         currentShow += 1
         if currentShow > 3:
             currentShow = 1
-        manualModeTimeElapsed = 0
+        manualModeTimeElapsed = 0   # Refresh manual mode timer
     else:
         startManualMode()
 input.on_button_pressed(Button.B, on_button_pressed_b)
 
 
 def on_button_pressed_ab():
+    """Called when buttons A and B are pressed together"""
     global currentShow
     global manualMode
     global manualModeTimeElapsed
     global settingThreshold
 
+    # Open valve for 2 seconds in manual mode
     if manualMode == True:
         openValve(currentShow - 1)
         basic.pause(2000)
         closeValve(currentShow - 1)
-        manualModeTimeElapsed = 0
+        manualModeTimeElapsed = 0   # Refresh manual mode timer
+    
+    # Activate/Deactivate setting threshold mode
     else:
         if settingThreshold == False:
             settingThreshold = True
@@ -273,9 +300,11 @@ input.on_button_pressed(Button.AB, on_button_pressed_ab)
 
 
 def manualModeTimer():
+    """Timer function to reset manual mode"""
     global manualMode
     global manualModeTimeWindow
     global manualModeTimeElapsed
+    
     if manualMode == True:
         manualModeTimeElapsed = manualModeTimeElapsed + 1
     
