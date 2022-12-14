@@ -105,9 +105,9 @@ def on_forever():
             for i in range(len(sensors)):
                 # Check moisture, if too low then open valve
                 if sensorVal[i] >= THRESHOLD:
-                    openValve(i)
+                    openPump(i)
                 else:
-                    closeValve(i)
+                    closePump(i)
 
         #LCD Control
         showStats(currentShow)
@@ -192,12 +192,12 @@ def progressBar(val: number):
         makerbit.lcd_show_character1602(LcdChar.C4, makerbit.position1602(LcdPosition1602.POS32))
 
 
-def closeValve(ind: number):
+def closePump(ind: number):
     """Closes given valve (indexed from 0)"""
     pins.digital_write_pin(valves[ind], 0)
 
 
-def openValve(ind: number):
+def openPump(ind: number):
     """Opens given valve (indexed from 0)"""
     pins.digital_write_pin(valves[ind], 1)
 
@@ -217,7 +217,7 @@ def startManualMode():
 
     # Close all valves before going into manual mode
     for i in range(len(sensors)):
-        closeValve(i)
+        closePump(i)
 
     manualMode = True
 
@@ -284,9 +284,9 @@ def on_button_pressed_ab():
 
     # Open valve for 2 seconds in manual mode
     if manualMode == True:
-        openValve(currentShow - 1)
+        openPump(currentShow - 1)
         basic.pause(2000)
-        closeValve(currentShow - 1)
+        closePump(currentShow - 1)
         manualModeTimeElapsed = 0   # Refresh manual mode timer
     
     # Activate/Deactivate setting threshold mode
