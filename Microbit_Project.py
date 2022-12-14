@@ -1,5 +1,5 @@
 #--SETUP--------------------------------------------------------------------------
-valves = [DigitalPin.P8, DigitalPin.P12, DigitalPin.P16]    # List of valve pin objects
+valves = [DigitalPin.P8, DigitalPin.P12, DigitalPin.P16]    # List of pump pin objects
 sensors = [AnalogPin.P0, AnalogPin.P1, AnalogPin.P2]        # List of sensor pin objects
 sensorVal = [0, 0, 0]                                       # List of sensor values
 currentShow = 1                                             # The pot currently being displayed on LCD
@@ -9,7 +9,7 @@ manualModeTimeWindow = 10                                   # How many seconds t
 settingThreshold = False                                    # Whether the user is setting the threshold
 MAX_VAL = 800                                               # Maximum value read from moisture sensor
 MIN_VAL = 300                                               # Minimum value read from moisture sensor
-THRESHOLD = 430                                             # The value after which the valve will open
+THRESHOLD = 430                                             # The value after which the pump will open
 
 # Initialize I2C adress of LCD
 makerbit.connect_lcd(39)
