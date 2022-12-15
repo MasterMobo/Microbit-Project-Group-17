@@ -1,5 +1,5 @@
 #--SETUP--------------------------------------------------------------------------
-valves = [DigitalPin.P8, DigitalPin.P12, DigitalPin.P16]    # List of pump pin objects
+pumps = [DigitalPin.P8, DigitalPin.P12, DigitalPin.P16]    # List of pump pin objects
 sensors = [AnalogPin.P0, AnalogPin.P1, AnalogPin.P2]        # List of sensor pin objects
 sensorVal = [0, 0, 0]                                       # List of sensor values
 currentShow = 1                                             # The pot currently being displayed on LCD
@@ -103,7 +103,7 @@ def on_forever():
     else:
         if manualMode == False:
             for i in range(len(sensors)):
-                # Check moisture, if too low then open valve
+                # Check moisture, if too low then open pump
                 if sensorVal[i] >= THRESHOLD:
                     openPump(i)
                 else:
@@ -198,17 +198,17 @@ def progressBar(val: number):
 
 
 def closePump(ind: number):
-    """Closes given valve (indexed from 0)"""
-    pins.digital_write_pin(valves[ind], 0)
+    """Turns off given pump (indexed from 0)"""
+    pins.digital_write_pin(pumps[ind], 0)
 
 
 def openPump(ind: number):
-    """Opens given valve (indexed from 0)"""
-    pins.digital_write_pin(valves[ind], 1)
+    """Turns on given pump (indexed from 0)"""
+    pins.digital_write_pin(pumps[ind], 1)
 
 
 def showNext():
-    """Changes the currently displayed valve to the next one"""
+    """Changes the currently displayed plant pot to the next one"""
     if manualMode == False:
         global currentShow
         currentShow += 1
@@ -220,7 +220,7 @@ def startManualMode():
     """Initializes the manual mode"""
     global manualMode
 
-    # Close all valves before going into manual mode
+    # Turn off pumps before going into manual mode
     for i in range(len(sensors)):
         closePump(i)
 
@@ -243,7 +243,7 @@ def on_button_pressed_a():
             THRESHOLD = MIN_VAL
         return
 
-    # Change to previous valve if in manual mode
+    # Change to previous plant pot if in manual mode
     if manualMode == True:
         currentShow -= 1
         if currentShow < 1:
@@ -269,7 +269,7 @@ def on_button_pressed_b():
             THRESHOLD = MAX_VAL     # Clamp THRESHOLD bellow MAX_VAL
         return
 
-    # Change to next valve if in manual mode
+    # Change to next plant pot if in manual mode
     if manualMode == True:
         currentShow += 1
         if currentShow > 3:
@@ -287,7 +287,7 @@ def on_button_pressed_ab():
     global manualModeTimeElapsed
     global settingThreshold
 
-    # Open valve for 2 seconds in manual mode
+    # Turn on plant pot for 2 seconds in manual mode
     if manualMode == True:
         openPump(currentShow - 1)
         basic.pause(2000)
