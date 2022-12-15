@@ -7,15 +7,15 @@ manualMode = False                                          # Whether the system
 manualModeTimeElapsed = 0                                   # How many seconds the system has been in manual mode (refreshes after any user input)
 manualModeTimeWindow = 10                                   # How many seconds the system can be in manual mode
 settingThreshold = False                                    # Whether the user is setting the threshold
-MAX_VAL = 800                                               # Maximum value read from moisture sensor
-MIN_VAL = 300                                               # Minimum value read from moisture sensor
-THRESHOLD = 430                                             # The value after which the pump will open
+MAX_VAL = 700                                               # Maximum value read from moisture sensor
+MIN_VAL = 500                                               # Minimum value read from moisture sensor
+THRESHOLD = 580                                             # The value after which the pump will open
 
 # Initialize I2C adress of LCD
 makerbit.connect_lcd(39)
 makerbit.clear_lcd1602()
 
-# Custom characters for LCD display 
+# Custom characters for LCD display
 makerbit.lcd_make_character(LcdChar.C1,
     makerbit.lcd_character_pixels("""
         # # # # #
@@ -128,7 +128,12 @@ def calculatePercent(val):
     global MAX_VAL
     global MIN_VAL
 
-    return Math.ceil(Math.map(val, MAX_VAL, MIN_VAL, 0, 100))
+    res = Math.ceil(Math.map(val, MAX_VAL, MIN_VAL, 0, 100))
+    if res > 100:
+        return 100
+    elif res < 0:
+        return 0
+    return res
 
 def setThresholdWindow():
     """Shows the window for setting threshold"""
@@ -235,14 +240,14 @@ def on_button_pressed_a():
     if settingThreshold:
         THRESHOLD = THRESHOLD - 5
         if THRESHOLD < MIN_VAL:     # Clamp THRESHOLD above MIN_VAL
-            THRESHOLD = MIN_VAL     
+            THRESHOLD = MIN_VAL
         return
 
     # Change to previous valve if in manual mode
     if manualMode == True:
         currentShow -= 1
-        if currentShow < 1:       
-            currentShow = 3         
+        if currentShow < 1:
+            currentShow = 3
         manualModeTimeElapsed = 0   # Refresh manual mode timer
     else:
         startManualMode()
